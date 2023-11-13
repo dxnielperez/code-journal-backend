@@ -1,4 +1,3 @@
-import EntryList from "./EntryList";
 export type UnsavedEntry = {
   title: string;
   notes: string;
@@ -24,35 +23,39 @@ export type Entry = UnsavedEntry & {
 // }
 
 export async function readEntries(): Promise<Entry[]> {
-    const response = await fetch('/api/entries')
-    const entries = await response.json();
-    return entries;
-
+  const response = await fetch('/api/entries');
+  const entries = await response.json();
+  return entries;
 }
 
 export async function addEntry(entry: UnsavedEntry): Promise<Entry> {
   const response = await fetch('/api/entries', {
-    method:'POST',
-    headers:{
-      'Content-Type':'application/json'
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
     },
-    body:JSON.stringify(entry)
+    body: JSON.stringify(entry),
   });
   const addResponse = await response.json();
   return addResponse;
 }
 
-export function updateEntry(entry: Entry): Entry {
-  const newEntries = data.entries.map((e) =>
-    e.entryId === entry.entryId ? entry : e
-  );
-  data.entries = newEntries;
-  return entry;
+export async function updateEntry(entry: Entry): Promise<Entry> {
+  const id = entry.entryId;
+  const response = await fetch(`/api/entries/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(entry),
+  });
+  const updatedEntry = await response.json();
+  return updatedEntry;
 }
 
-export function removeEntry(entryId: number): void {
-  const updatedArray = data.entries.filter(
-    (entry) => entry.entryId !== entryId
-  );
-  data.entries = updatedArray;
+export async function removeEntry(entryId: number): Promise<void> {
+  const id = entryId;
+  await fetch(`/api/entries/${id}`, {
+    method: 'DELETE',
+  });
 }

@@ -21,7 +21,7 @@ export default function EntryForm({ entry, onSubmit }: Props) {
       event.preventDefault();
       const newEntry = { title, photoUrl, notes };
       if (entry) {
-        updateEntry({ ...entry, ...newEntry });
+        await updateEntry({ ...entry, ...newEntry });
       } else {
         await addEntry(newEntry);
       }
@@ -31,10 +31,14 @@ export default function EntryForm({ entry, onSubmit }: Props) {
     }
   }
 
-  function handleDelete() {
-    if (!entry) throw new Error('Should never happen');
-    removeEntry(entry.entryId);
-    onSubmit();
+  async function handleDelete() {
+    try {
+      if (!entry) throw new Error('Should never happen');
+      await removeEntry(entry.entryId);
+      onSubmit();
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   return (

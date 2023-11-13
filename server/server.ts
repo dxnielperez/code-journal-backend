@@ -14,7 +14,7 @@ const db = new pg.Pool({
 const app = express();
 app.use(express.json());
 
-app.get('/api/entries', async (req, res ,next) => {
+app.get('/api/entries', async (req, res, next) => {
   try {
     const sql = `
     select *
@@ -23,40 +23,39 @@ app.get('/api/entries', async (req, res ,next) => {
 
     const result = await db.query(sql);
     const entries = result.rows;
-    res.status(200).json(entries)
+    res.status(200).json(entries);
   } catch (error) {
-    console.error(error)
+    console.error(error);
     next(error);
   }
+});
 
-})
-
-app.get('/api/entries/:entryId', async (req, res ,next) => {
+app.get('/api/entries/:entryId', async (req, res, next) => {
   try {
     const entryId = Number(req.params.entryId);
     if (typeof entryId !== 'number') {
-      throw new ClientError(400,'EntryId must be a number');
+      throw new ClientError(400, 'EntryId must be a number');
     }
-    if(entryId < 1 ) {
-      throw new ClientError(400,'EntryId must be a positive number');
+    if (entryId < 1) {
+      throw new ClientError(400, 'EntryId must be a positive number');
     }
 
     const sql = `
     select *
     from "entries"
     where "entryId" = $1
-    `
+    `;
     const params = [entryId];
     const result = await db.query(sql, params);
     const entry = result.rows[0];
     res.status(200).json(entry);
   } catch (error) {
-    console.error(error)
+    console.error(error);
     next(error);
   }
-})
+});
 
-app.post('/api/entries', async (req, res ,next) => {
+app.post('/api/entries', async (req, res, next) => {
   try {
     const sql = `
     insert into "entries" ("title", "notes", "photoUrl")
@@ -64,37 +63,37 @@ app.post('/api/entries', async (req, res ,next) => {
     returning *;
     `;
     const { title, notes, photoUrl } = req.body;
-    const params = [ title, notes, photoUrl ];
-    if(!title) {
-      throw new ClientError(400, 'Missing title')
+    const params = [title, notes, photoUrl];
+    if (!title) {
+      throw new ClientError(400, 'Missing title');
     }
-    if(!notes) {
-      throw new ClientError(400, 'Missing notes')
+    if (!notes) {
+      throw new ClientError(400, 'Missing notes');
     }
-    if(!photoUrl) {
-      throw new ClientError(400, 'Missing photoUrl')
+    if (!photoUrl) {
+      throw new ClientError(400, 'Missing photoUrl');
     }
     const result = await db.query(sql, params);
     const entry = result.rows[0];
-    res.status(200).json(entry)
-
+    res.status(200).json(entry);
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 
-app.put('/api/entries/:entryId', async (req, res ,next) => {
+app.put('/api/entries/:entryId', async (req, res, next) => {
   try {
-        const entryId = Number(req.params.entryId);
-    if (typeof entryId !== 'number') {
-      throw new ClientError(400,'EntryId must be a number');
+    const { entryId } = req.params;
+    const id = Number(entryId);
+    console.log('entryId', entryId);
+    if (typeof id !== 'number') {
+      throw new ClientError(400, 'EntryId must be a number');
     }
-    if(entryId < 1 ) {
-      throw new ClientError(400,'EntryId must be a positive number');
+    if (id < 1) {
+      throw new ClientError(400, 'EntryId must be a positive number');
     }
 
-
-    const sql =`
+    const sql = `
     update "entries"
     set "title" = $1,
         "notes" = $2,
@@ -102,45 +101,43 @@ app.put('/api/entries/:entryId', async (req, res ,next) => {
     where "entryId" = $4
     returning *;
     `;
-    const params = [req.body.title, req.body.notes, req.body.photoUrl, entryId];
+    const params = [req.body.title, req.body.notes, req.body.photoUrl, id];
     const result = await db.query(sql, params);
     const entry = result.rows[0];
 
     res.status(200).json(entry);
-
   } catch (error) {
     next(error);
   }
-})
+});
 
-app.delete('/api/entries/:entryId', async (req, res ,next) => {
-try {
-    const entryId = Number(req.params.entryId);
-    if (typeof entryId !== 'number') {
-      throw new ClientError(400,'EntryId must be a number');
+app.delete('/api/entries/:entryId', async (req, res, next) => {
+  try {
+    const { entryId } = req.params;
+
+    const id = Number(entryId);
+    if (typeof id !== 'number') {
+      throw new ClientError(400, 'EntryId must be a number');
     }
-    if(entryId < 1 ) {
-      throw new ClientError(400,'EntryId must be a positive number');
-    }
-    const { content } = req.body;
-        if(!content) {
-      throw new ClientError(400, 'Missing content')
+    if (id < 1) {
+      throw new ClientError(400, 'EntryId must be a positive number');
     }
 
     const sql = `
-    DELETE
+    delete
     from "entries"
     where "entryId" = $1
     returning *;
     `;
-    const params = [entryId];
+    const params = [id];
     const result = await db.query(sql, params);
     const entry = result.rows[0];
+    if (!entry) throw new ClientError(404, `entryId ${id} doesnt exist`);
     res.status(204).json(entry);
   } catch (error) {
-    console.error(error)
     next(error);
-}});
+  }
+});
 
 app.use(errorMiddleware);
 
