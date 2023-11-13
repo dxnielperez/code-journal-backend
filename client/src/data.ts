@@ -1,3 +1,4 @@
+import EntryList from "./EntryList";
 export type UnsavedEntry = {
   title: string;
   notes: string;
@@ -7,23 +8,26 @@ export type Entry = UnsavedEntry & {
   entryId: number;
 };
 
-let data = {
-  entries: [] as Entry[],
-  nextEntryId: 1,
-};
+// let data = {
+//   entries: [] as Entry[],
+//   nextEntryId: 1,
+// };
 
-window.addEventListener('beforeunload', function () {
-  const dataJSON = JSON.stringify(data);
-  localStorage.setItem('code-journal-data', dataJSON);
-});
+// window.addEventListener('beforeunload', function () {
+//   const dataJSON = JSON.stringify(data);
+//   localStorage.setItem('code-journal-data', dataJSON);
+// });
 
-const localData = localStorage.getItem('code-journal-data');
-if (localData) {
-  data = JSON.parse(localData);
-}
+// const localData = localStorage.getItem('code-journal-data');
+// if (localData) {
+//   data = JSON.parse(localData);
+// }
 
-export function readEntries(): Entry[] {
-  return data.entries;
+export async function readEntries(): Promise<Entry[]> {
+    const response = await fetch('/api/entries')
+    const entries = await response.json();
+    return entries;
+
 }
 
 export function addEntry(entry: UnsavedEntry): Entry {

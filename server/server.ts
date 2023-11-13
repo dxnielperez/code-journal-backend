@@ -12,6 +12,131 @@ const db = new pg.Pool({
 });
 
 const app = express();
+app.use(express.json());
+
+app.get('/api/entries', errorMiddleware, async (req, res ,next) => {
+  try {
+    const sql = `
+    select *
+    from "entries"
+    `;
+    
+    const result = await db.query(sql);
+    const entries = result.rows;
+    res.status(200).json(entries)
+  } catch (error) {
+    console.error(error)
+    next(error);
+  }
+
+})
+
+app.get('/api/entries/:entryId', errorMiddleware, async (req, res ,next) => {
+  try {
+    const entryId = Number(req.params.entryId);
+    if (typeof entryId !== 'number') {
+      throw new ClientError(400,'EntryId must be a number');
+    }
+    if(entryId < 1 ) {
+      throw new ClientError(400,'EntryId must be a positive number');
+    }
+
+    const sql = `
+    select *
+    from "entries"
+    where "entryId" = $1
+    `
+    const params = [entryId];
+    const result = await db.query(sql, params);
+    const entry = result.rows[0];
+    res.status(200).json(entry);
+  } catch (error) {
+    console.error(error)
+    next(error);
+  }
+})
+
+app.post('/api/entries', async (req, res ,next) => {
+  try {
+    const sql = `
+    insert into "entries" ("title", "notes", "photoUrl")
+    values ($1, $2, $3)
+    returning *;
+    `;
+    const { content } = req.body;
+    const params = [ req.body.title , req.body.notes , req.body.photoUrl ];
+    if(!content) {
+      throw new ClientError(400, 'Missing content')
+    }
+    const result = await db.query(sql, params);
+    const entry = result.rows[0];
+    res.status(200).json(entry)
+
+  } catch (error) {
+    next(error)
+  }
+})
+
+app.put('/api/entries/:entryId', async (req, res ,next) => {
+  try {
+        const entryId = Number(req.params.entryId);
+    if (typeof entryId !== 'number') {
+      throw new ClientError(400,'EntryId must be a number');
+    }
+    if(entryId < 1 ) {
+      throw new ClientError(400,'EntryId must be a positive number');
+    }
+
+
+    const sql =`
+    update "entries"
+    set "title" = $1,
+        "notes" = $2,
+        "photoUrl" = $3
+    where "entryId" = $4
+    returning *;
+    `;
+    const params = [req.body.title, req.body.notes, req.body.photoUrl, entryId];
+    const result = await db.query(sql, params);
+    const entry = result.rows[0];
+
+    res.status(200).json(entry);
+
+  } catch (error) {
+    next(error);
+  }
+})
+
+app.delete('/api/entries/:entryId', async (req, res ,next) => {
+try {
+    const entryId = Number(req.params.entryId);
+    if (typeof entryId !== 'number') {
+      throw new ClientError(400,'EntryId must be a number');
+    }
+    if(entryId < 1 ) {
+      throw new ClientError(400,'EntryId must be a positive number');
+    }
+    const { content } = req.body;
+        if(!content) {
+      throw new ClientError(400, 'Missing content')
+    }
+
+    const sql = `
+    DELETE
+    from "entries"
+    where "entryId" = $1
+    returning *;
+    `;
+    const params = [entryId];
+    const result = await db.query(sql, params);
+    const entry = result.rows[0];
+    res.status(204).json(entry);
+  } catch (error) {
+    console.error(error)
+    next(error);
+}});
+
+app.use(errorMiddleware);
 
 app.listen(process.env.PORT, () => {
   console.log(`express server listening on port ${process.env.PORT}`);
