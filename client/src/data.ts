@@ -30,13 +30,16 @@ export async function readEntries(): Promise<Entry[]> {
 
 }
 
-export function addEntry(entry: UnsavedEntry): Entry {
-  const newEntry = {
-    ...entry,
-    entryId: data.nextEntryId++,
-  };
-  data.entries.unshift(newEntry);
-  return newEntry;
+export async function addEntry(entry: UnsavedEntry): Promise<Entry> {
+  const response = await fetch('/api/entries', {
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json'
+    },
+    body:JSON.stringify(entry)
+  });
+  const addResponse = await response.json();
+  return addResponse;
 }
 
 export function updateEntry(entry: Entry): Entry {

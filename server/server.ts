@@ -14,13 +14,13 @@ const db = new pg.Pool({
 const app = express();
 app.use(express.json());
 
-app.get('/api/entries', errorMiddleware, async (req, res ,next) => {
+app.get('/api/entries', async (req, res ,next) => {
   try {
     const sql = `
     select *
     from "entries"
     `;
-    
+
     const result = await db.query(sql);
     const entries = result.rows;
     res.status(200).json(entries)
@@ -31,7 +31,7 @@ app.get('/api/entries', errorMiddleware, async (req, res ,next) => {
 
 })
 
-app.get('/api/entries/:entryId', errorMiddleware, async (req, res ,next) => {
+app.get('/api/entries/:entryId', async (req, res ,next) => {
   try {
     const entryId = Number(req.params.entryId);
     if (typeof entryId !== 'number') {
@@ -63,10 +63,16 @@ app.post('/api/entries', async (req, res ,next) => {
     values ($1, $2, $3)
     returning *;
     `;
-    const { content } = req.body;
-    const params = [ req.body.title , req.body.notes , req.body.photoUrl ];
-    if(!content) {
-      throw new ClientError(400, 'Missing content')
+    const { title, notes, photoUrl } = req.body;
+    const params = [ title, notes, photoUrl ];
+    if(!title) {
+      throw new ClientError(400, 'Missing title')
+    }
+    if(!notes) {
+      throw new ClientError(400, 'Missing notes')
+    }
+    if(!photoUrl) {
+      throw new ClientError(400, 'Missing photoUrl')
     }
     const result = await db.query(sql, params);
     const entry = result.rows[0];

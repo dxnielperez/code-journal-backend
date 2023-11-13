@@ -19,7 +19,7 @@ export default function EntryList({ onCreate, onEdit }: Props) {
       }
     }
     getEntries();
-  });
+  }, []);
 
   return (
     <div className="container">
