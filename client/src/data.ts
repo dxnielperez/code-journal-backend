@@ -7,45 +7,55 @@ export type Entry = UnsavedEntry & {
   entryId: number;
 };
 
-let data = {
-  entries: [] as Entry[],
-  nextEntryId: 1,
-};
+// let data = {
+//   entries: [] as Entry[],
+//   nextEntryId: 1,
+// };
 
-window.addEventListener('beforeunload', function () {
-  const dataJSON = JSON.stringify(data);
-  localStorage.setItem('code-journal-data', dataJSON);
-});
+// window.addEventListener('beforeunload', function () {
+//   const dataJSON = JSON.stringify(data);
+//   localStorage.setItem('code-journal-data', dataJSON);
+// });
 
-const localData = localStorage.getItem('code-journal-data');
-if (localData) {
-  data = JSON.parse(localData);
+// const localData = localStorage.getItem('code-journal-data');
+// if (localData) {
+//   data = JSON.parse(localData);
+// }
+
+export async function readEntries(): Promise<Entry[]> {
+  const response = await fetch('/api/entries');
+  const entries = await response.json();
+  return entries;
 }
 
-export function readEntries(): Entry[] {
-  return data.entries;
+export async function addEntry(entry: UnsavedEntry): Promise<Entry> {
+  const response = await fetch('/api/entries', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(entry),
+  });
+  const addResponse = await response.json();
+  return addResponse;
 }
 
-export function addEntry(entry: UnsavedEntry): Entry {
-  const newEntry = {
-    ...entry,
-    entryId: data.nextEntryId++,
-  };
-  data.entries.unshift(newEntry);
-  return newEntry;
+export async function updateEntry(entry: Entry): Promise<Entry> {
+  const id = entry.entryId;
+  const response = await fetch(`/api/entries/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(entry),
+  });
+  const updatedEntry = await response.json();
+  return updatedEntry;
 }
 
-export function updateEntry(entry: Entry): Entry {
-  const newEntries = data.entries.map((e) =>
-    e.entryId === entry.entryId ? entry : e
-  );
-  data.entries = newEntries;
-  return entry;
-}
-
-export function removeEntry(entryId: number): void {
-  const updatedArray = data.entries.filter(
-    (entry) => entry.entryId !== entryId
-  );
-  data.entries = updatedArray;
+export async function removeEntry(entryId: number): Promise<void> {
+  const id = entryId;
+  await fetch(`/api/entries/${id}`, {
+    method: 'DELETE',
+  });
 }

@@ -1,12 +1,26 @@
 import { FaPencilAlt } from 'react-icons/fa';
 import { Entry, readEntries } from './data';
+import { useEffect, useState } from 'react';
 
 type Props = {
   onCreate: () => void;
   onEdit: (entry: Entry) => void;
 };
 export default function EntryList({ onCreate, onEdit }: Props) {
-  const entries = readEntries();
+  const [entries, setEntries] = useState<Entry[]>([]);
+
+  useEffect(() => {
+    async function getEntries() {
+      try {
+        const entries = await readEntries();
+        setEntries(entries);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    getEntries();
+  }, []);
+
   return (
     <div className="container">
       <div className="row">
